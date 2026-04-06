@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrubby — Settings</title>
+  <link rel="stylesheet" href="popup.css">
+  <style>
+    body {
+      width: auto;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 0 16px 40px;
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 20px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .page-header .logo { color: #7c8aff; display: flex; }
+    .page-header h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+    .pattern-hostname { font-size: 11px; opacity: 0.45; margin-left: 4px; }
+
+    /* Import/export format groups */
+    .fmt-group {
+      margin-bottom: 10px;
+    }
+    .fmt-group:last-child {
+      margin-bottom: 0;
+    }
+    .fmt-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .fmt-row .footer-actions {
+      flex: 1;
+    }
+    .settings-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #666;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 5px;
+      padding: 6px 8px;
+      line-height: 1.5;
+    }
+    .settings-hint.hidden {
+      display: none;
+    }
+
+    /* Help section */
+    .help-content {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .help-block-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #bbb;
+      margin-bottom: 4px;
+    }
+    .help-block-desc {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+    .help-block-desc code {
+      font-family: monospace;
+      color: #888;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    .help-example {
+      font-family: monospace;
+      font-size: 11px;
+      color: #666;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 5px;
+      padding: 8px 10px;
+      line-height: 1.5;
+      white-space: pre;
+      overflow-x: auto;
+      margin: 0;
+    }
+
+    /* Feedback bar (toast) */
+    .feedback-bar {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: #1e1e2e;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #ccc;
+      opacity: 0;
+      transition: opacity 0.18s, transform 0.18s;
+      pointer-events: none;
+      white-space: normal;
+      z-index: 100;
+      max-width: calc(100vw - 48px);
+      text-align: center;
+    }
+    .feedback-bar.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .feedback-bar.success {
+      border-color: rgba(74, 222, 128, 0.3);
+      color: #4ade80;
+    }
+    .feedback-bar.error {
+      border-color: rgba(231, 76, 60, 0.35);
+      color: #e07070;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h1>Scrubby — Settings</h1>
+  </div>
+
+  <!-- Supported sites -->
+  <div class="section">
+    <div class="section-header"><h2>Supported Sites</h2></div>
+    <div id="siteList" class="pattern-list"></div>
+  </div>
+
+  <!-- Terms export / import -->
+  <div class="section">
+    <div class="section-header"><h2>Custom Terms</h2></div>
+
+    <div class="fmt-group">
+      <div class="fmt-row">
+        <div class="footer-actions">
+          <button class="btn-secondary" id="exportTermsBtn">Export as TXT</button>
+          <button class="btn-secondary" id="importTermsBtn">Import TXT</button>
+          <input type="file" id="importTermsFile" accept=".txt" style="display:none">
+        </div>
+        <span class="opt-info settings-hint-toggle" data-hint="txtHint">ⓘ</span>
+      </div>
+      <div class="settings-hint hidden" id="txtHint">One term per line. All imported terms use default settings (whole word matching, case insensitive).</div>
+    </div>
+
+    <div class="fmt-group">
+      <div class="fmt-row">
+        <div class="footer-actions">
+          <button class="btn-secondary" id="exportCsvBtn">Export as CSV</button>
+          <button class="btn-secondary" id="importCsvBtn">Import CSV</button>
+          <input type="file" id="importCsvFile" accept=".csv" style="display:none">
+        </div>
+        <span class="opt-info settings-hint-toggle" data-hint="csvHint">ⓘ</span>
+      </div>
+      <div class="settings-hint hidden" id="csvHint">CSV with headers: term, replacement, partialMatch, caseSensitive. replacement is a custom output string (leave empty to use the default placeholder). partialMatch and caseSensitive are TRUE or FALSE. Only the term column is required — missing columns use defaults.</div>
+    </div>
+  </div>
+
+  <!-- Backup & Restore (JSON) -->
+  <div class="section">
+    <div class="section-header"><h2>Backup &amp; Restore</h2></div>
+    <div class="fmt-group">
+      <div class="fmt-row">
+        <div class="footer-actions">
+          <button class="btn-secondary" id="backupBtn">Backup Settings</button>
+          <button class="btn-secondary" id="restoreBtn">Restore Settings</button>
+          <input type="file" id="restoreFile" accept=".json" style="display:none">
+        </div>
+        <span class="opt-info settings-hint-toggle" data-hint="backupHint">ⓘ</span>
+      </div>
+      <div class="settings-hint hidden" id="backupHint">Full backup of all extension data including terms with their settings, pattern toggles, and per-site toggles. Use this to transfer your complete configuration to another browser.</div>
+    </div>
+  </div>
+
+  <!-- Help -->
+  <div class="section">
+    <div class="section-header"><h2>Help</h2></div>
+    <div class="help-content">
+
+      <div class="help-block">
+        <div class="help-block-title">Plain Text (.txt)</div>
+        <p class="help-block-desc">One term per line. Blank lines are ignored. All imported terms use default settings: whole word matching, case insensitive.</p>
+        <pre class="help-example">Acme Corporation
+john.smith
+Project Phoenix</pre>
+      </div>
+
+      <div class="help-block">
+        <div class="help-block-title">CSV (.csv)</div>
+        <p class="help-block-desc">Comma- or semicolon-separated with a header row. The delimiter is auto-detected. Only the <code>term</code> column is required — missing columns use defaults. <code>replacement</code> is a custom output string (leave empty to use the default <code>[TERM_N]</code> placeholder). <code>partialMatch</code> and <code>caseSensitive</code> are <code>TRUE</code> or <code>FALSE</code> (default <code>FALSE</code>).</p>
+        <pre class="help-example">term,replacement,partialMatch,caseSensitive
+Acme Corporation,,FALSE,FALSE
+acme,,TRUE,FALSE
+InternalName,,FALSE,TRUE
+John Smith,Jane Doe,FALSE,FALSE</pre>
+      </div>
+
+      <div class="help-block">
+        <div class="help-block-title">Backup (.json)</div>
+        <p class="help-block-desc">Full backup of all extension data: terms with their settings, auto-detection pattern toggles (email, phone, SSN, credit card), and per-site on/off toggles. Use this to transfer your complete configuration to another browser or device.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="feedbackBar" class="feedback-bar"></div>
+  <script src="settings.js"></script>
+</body>
+</html>

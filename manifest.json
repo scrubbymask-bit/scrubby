@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Scrubby",
+  "version": "1.0.0",
+  "description": "Scrub sensitive information before it reaches LLM chat interfaces. All processing happens locally — nothing leaves your browser.",
+  "permissions": ["storage", "sidePanel"],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://www.perplexity.ai/*",
+    "https://copilot.microsoft.com/*",
+    "https://chat.mistral.ai/*",
+    "https://poe.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://www.perplexity.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://chat.mistral.ai/*",
+        "https://poe.com/*"
+      ],
+      "js": ["rules.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
