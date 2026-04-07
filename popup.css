@@ -186,10 +186,6 @@ h1 {
   font-weight: 500;
 }
 
-.detection-count {
-  color: #FF9800;
-  font-weight: 500;
-}
 
 /* Sections */
 .section {
@@ -800,7 +796,8 @@ h2 {
   display: none;
 }
 
-/* Footer actions */
+
+/* Footer actions (used in settings.html) */
 .footer-actions {
   display: flex;
   gap: 8px;

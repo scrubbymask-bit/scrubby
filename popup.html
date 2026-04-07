@@ -65,9 +65,6 @@
           <span class="replacement-count" id="replacementCount" style="display:none">
             <span id="countNumber">0</span> scrubbed
           </span>
-          <span class="detection-count" id="detectionCount" style="display:none">
-            <span id="detectionNumber">0</span> detected
-          </span>
         </div>
       </div>
 
@@ -88,16 +85,16 @@
           <h2>Typing Protection</h2>
         </div>
         <div class="pattern-item" id="monitorTypingItem">
-          <label for="monitorTypingToggle">Monitor while typing</label>
+          <label for="monitorTypingToggle">Replace as you type</label>
           <div class="typing-toggle-right">
             <button class="opt-info monitor-info-btn" id="monitorTypingInfo" title="About typing detection">ⓘ</button>
             <label class="toggle">
-              <input type="checkbox" id="monitorTypingToggle" aria-label="Monitor while typing">
+              <input type="checkbox" id="monitorTypingToggle" aria-label="Replace as you type">
               <span class="toggle-slider"></span>
             </label>
           </div>
         </div>
-        <div class="term-opt-help hidden" id="monitorTypingHelp">When enabled, Scrubby monitors what you type and warns you if a sensitive term is detected. You can review and replace detections in the Scrubby Log. Note: keystrokes may still be captured by the site before replacement.</div>
+        <div class="term-opt-help hidden" id="monitorTypingHelp">When enabled, Scrubby automatically replaces sensitive terms as you type, before you send. Replacements are logged in the Scrubby Log. Note: keystrokes may still be captured by the site before replacement.</div>
       </div>
 
       <!-- User-defined terms -->

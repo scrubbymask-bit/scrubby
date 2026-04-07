@@ -320,13 +320,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Backup Settings (full JSON) ---
 
   backupBtn.addEventListener("click", () => {
-    chrome.storage.local.get(["userTerms", "patternSettings", "siteEnabled"], (result) => {
+    chrome.storage.local.get(["userTerms", "patternSettings", "siteEnabled", "emailReplacement", "monitorTyping"], (result) => {
       const data = {
         version: 1,
         exportedAt: new Date().toISOString(),
         userTerms: result.userTerms || [],
         patternSettings: result.patternSettings || {},
         siteEnabled: result.siteEnabled || {},
+        emailReplacement: result.emailReplacement || "",
+        monitorTyping: result.monitorTyping === true,
       };
       download(JSON.stringify(data, null, 2), "llm-scrub-backup.json", "application/json");
     });
@@ -420,7 +422,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    return { userTerms, patternSettings, siteEnabled };
+    const emailReplacement = typeof data.emailReplacement === "string" ? data.emailReplacement : "";
+    const monitorTyping = data.monitorTyping === true;
+
+    return { userTerms, patternSettings, siteEnabled, emailReplacement, monitorTyping };
   }
 
   function download(content, filename, type) {

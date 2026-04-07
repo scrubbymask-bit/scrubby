@@ -14,8 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusText = document.getElementById("statusText");
   const replacementCount = document.getElementById("replacementCount");
   const countNumber = document.getElementById("countNumber");
-  const detectionCount = document.getElementById("detectionCount");
-  const detectionNumber = document.getElementById("detectionNumber");
   const logDot = document.getElementById("logDot");
   const patternList = document.getElementById("patternList");
   const newTermInput = document.getElementById("newTermInput");
@@ -148,40 +146,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadSessionCounts(tabId) {
-    chrome.storage.session.get(
-      [`typingDetections_${tabId}`, `scrubBadge_${tabId}`],
-      (data) => {
-        const detections = data[`typingDetections_${tabId}`] || [];
-        const scrubBadge = data[`scrubBadge_${tabId}`] || 0;
-        updateDetectionCount(detections.length);
-        updateLogDot(detections.length, scrubBadge);
-      }
-    );
-  }
-
-  function updateDetectionCount(count) {
-    if (count > 0) {
-      detectionNumber.textContent = count;
-      detectionCount.style.display = "inline";
-    } else {
-      detectionCount.style.display = "none";
-    }
-    updateStatusCountsVisibility();
+    chrome.storage.session.get([`scrubBadge_${tabId}`], (data) => {
+      const scrubBadge = data[`scrubBadge_${tabId}`] || 0;
+      updateLogDot(scrubBadge);
+    });
   }
 
   function updateStatusCountsVisibility() {
     const statusCounts = document.getElementById("statusCounts");
-    const anyVisible =
-      replacementCount.style.display !== "none" ||
-      detectionCount.style.display !== "none";
-    statusCounts.style.display = anyVisible ? "" : "none";
+    statusCounts.style.display = replacementCount.style.display !== "none" ? "" : "none";
   }
 
-  function updateLogDot(typingCount, scrubBadge) {
-    if (typingCount > 0) {
-      logDot.className = "log-dot";
-      logDot.style.display = "";
-    } else if (scrubBadge > 0) {
+  function updateLogDot(scrubBadge) {
+    if (scrubBadge > 0) {
       logDot.className = "log-dot log-dot--purple";
       logDot.style.display = "";
     } else {
@@ -189,13 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Live updates while popup is open
-  chrome.runtime.onMessage.addListener((message) => {
-    if (currentTabId === null || message.tabId !== currentTabId) return;
-    if (message.type === "typing-detection-update") {
-      loadSessionCounts(currentTabId);
-    }
-  });
 
   // --- Enable/Disable ---
 
@@ -219,6 +189,8 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.storage.local.set({ siteEnabled }, () => {
         if (chrome.runtime.lastError) {
           console.error("[Scrubby] siteEnabled write failed:", chrome.runtime.lastError.message);
+          enableToggle.checked = !enabled;
+          updateStatus(!enabled);
         }
       });
     });
@@ -230,6 +202,18 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.set({ monitorTyping: enabled }, () => {
       if (chrome.runtime.lastError) {
         console.error("[Scrubby] monitorTyping write failed:", chrome.runtime.lastError.message);
+        monitorTypingToggle.checked = !enabled;
+        // The direct toggle message below already ran; send the reverse so the
+        // content script's in-memory state stays in sync (onChanged won't fire
+        // because the write failed and storage still holds the previous value).
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: "toggle-typing-monitor",
+              enabled: !enabled,
+            }).catch(() => {});
+          }
+        });
       }
     });
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -294,12 +278,15 @@ document.addEventListener("DOMContentLoaded", () => {
       item
         .querySelector(".toggle input")
         .addEventListener("change", (e) => {
+          const input = e.target;
+          const newEnabled = input.checked;
           chrome.storage.local.get(["patternSettings"], (result) => {
             const ps = result.patternSettings || {};
-            ps[pattern.key] = e.target.checked;
+            ps[pattern.key] = newEnabled;
             chrome.storage.local.set({ patternSettings: ps }, () => {
               if (chrome.runtime.lastError) {
                 console.error("[Scrubby] patternSettings write failed:", chrome.runtime.lastError.message);
+                input.checked = !newEnabled;
               }
             });
           });
@@ -520,11 +507,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const terms = result.userTerms || [];
       const idx = terms.findIndex((t) => t.id === id);
       if (idx === -1) return;
+      const oldTerm = terms[idx]; // snapshot before modification for failure revert
       terms[idx] = { ...terms[idx], ...updates };
       if (!terms[idx].replacement) delete terms[idx].replacement;
       chrome.storage.local.set({ userTerms: terms }, () => {
         if (chrome.runtime.lastError) {
           console.error("[Scrubby] updateTermSetting write failed:", chrome.runtime.lastError.message);
+          refreshTermBadges(id, oldTerm); // revert badges to the last persisted state
           return;
         }
         refreshTermBadges(id, terms[idx]);

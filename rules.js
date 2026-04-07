@@ -198,7 +198,7 @@ const LLMScrubRules = (() => {
       // for spans without a custom replacement. Then apply in reverse so
       // earlier replacements don't shift the indices of later ones.
       allTermSpans.sort((a, b) => a.start - b.start);
-      let termN = 0;
+      let termN = options.startCounters?.term ?? 0;
       for (const span of allTermSpans) {
         span.placeholder = span.replacement ? span.replacement : `[TERM_${++termN}]`;
       }
@@ -236,14 +236,16 @@ const LLMScrubRules = (() => {
         matches.push({ value: m[0], index: m.index });
       }
 
-      // Replace in reverse to preserve indices; number by forward position (i+1).
+      // Replace in reverse to preserve indices; number by forward position (i+1),
+      // offset by startCounters so numbers don't collide with existing placeholders.
+      const startN = options.startCounters?.[key] ?? 0;
       for (let i = matches.length - 1; i >= 0; i--) {
         let placeholder;
         if (key === "email") {
           const emailReplacement = options.emailReplacement || "";
-          placeholder = emailReplacement ? emailReplacement : `user${i + 1}@example.com`;
+          placeholder = emailReplacement ? emailReplacement : `user${startN + i + 1}@example.com`;
         } else {
-          placeholder = `[${pattern.placeholder}_${i + 1}]`;
+          placeholder = `[${pattern.placeholder}_${startN + i + 1}]`;
         }
         replacements.push({
           original: matches[i].value,
