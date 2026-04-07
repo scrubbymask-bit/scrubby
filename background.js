@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     enqueueTabOp(tabId, (done) => {
       chrome.storage.session.get([logKey, badgeKey], (data) => {
         const log        = data[logKey]   || [];
-        const badgeCount = (data[badgeKey] || 0) + 1;
+        const badgeCount = (data[badgeKey] || 0) + entry.replacements.length;
 
         log.unshift(entry); // newest first
         if (log.length > MAX_LOG_ENTRIES) log.length = MAX_LOG_ENTRIES;
@@ -142,6 +142,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "clear-badge") {
     if (!isFromExtensionPage(sender)) return;
     const { tabId } = message;
+    tabCounts[tabId] = 0;
     chrome.storage.session.remove([`scrubBadge_${tabId}`, `scrubLog_${tabId}`], () => {
       if (chrome.runtime.lastError) {
         console.error("[Scrubby] clear-badge remove failed:", chrome.runtime.lastError.message);

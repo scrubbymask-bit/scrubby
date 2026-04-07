@@ -72,9 +72,10 @@
       </div>
 
       <!-- Auto-detection patterns -->
-      <div class="section">
-        <div class="section-header">
+      <div class="section" id="autoDetectSection">
+        <div class="section-header section-header--collapsible" id="autoDetectHeader">
           <h2>Auto-Detection</h2>
+          <span class="section-chevron">&#x203A;</span>
         </div>
         <div class="pattern-list" id="patternList">
           <!-- Populated by JS -->
@@ -110,6 +111,7 @@
             <input type="text" id="newTermInput" placeholder='e.g. "Acme Corp"' autocomplete="off" aria-label="Add a new term to scrub">
             <button id="addTermBtn" title="Add term">+</button>
           </div>
+          <span class="term-save-indicator" id="addTermIndicator">✓ Added</span>
           <div class="term-options">
             <div class="term-opt-wrap">
               <label class="term-opt-check">

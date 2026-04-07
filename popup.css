@@ -208,6 +208,29 @@ h1 {
   margin-bottom: 10px;
 }
 
+.section-header--collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-chevron {
+  font-size: 14px;
+  color: #444;
+  transform: rotate(90deg);
+}
+
+.transitions-ready .section-chevron {
+  transition: transform 0.15s;
+}
+
+.section--collapsed .section-chevron {
+  transform: rotate(0deg);
+}
+
+.section--collapsed .pattern-list {
+  display: none;
+}
+
 .terms-subheading {
   font-size: 10px;
   font-weight: 600;
@@ -487,6 +510,13 @@ h2 {
 .add-term button:hover {
   background: #6b79ee;
 }
+
+#addTermIndicator {
+  display: block;
+  text-align: right;
+  margin-top: 4px;
+}
+
 
 /* Replacement input row (hidden by default, shown when checkbox checked) */
 .add-term-replacement-row {

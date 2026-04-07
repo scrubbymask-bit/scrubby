@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       chrome.storage.local.get(
-        ["siteEnabled", "userTerms", "patternSettings", "emailReplacement", "monitorTyping"],
+        ["siteEnabled", "userTerms", "patternSettings", "emailReplacement", "monitorTyping", "autoDetectCollapsed"],
         (result) => {
           const siteEnabled = result.siteEnabled || {};
           const enabled = siteEnabled[currentHostname] !== false;
@@ -115,6 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
           renderPatterns(result.patternSettings || {}, result.emailReplacement || "");
           renderTerms(migratedTerms);
           monitorTypingToggle.checked = result.monitorTyping === true;
+          if (result.autoDetectCollapsed) {
+            document.getElementById("autoDetectSection").classList.add("section--collapsed");
+          }
           // Reveal first, then enable transitions on the next frame.
           // Transitions are defined only under .transitions-ready, so they
           // cannot fire during the initial paint.
@@ -674,6 +677,10 @@ document.addEventListener("DOMContentLoaded", () => {
         hideReplacementRow();
         newTermInput.focus();
         addTermBtn.disabled = false;
+        const addIndicator = document.getElementById("addTermIndicator");
+        addIndicator.classList.remove("term-save-indicator--active");
+        void addIndicator.offsetWidth;
+        addIndicator.classList.add("term-save-indicator--active");
       });
     });
   }
@@ -713,6 +720,10 @@ document.addEventListener("DOMContentLoaded", () => {
     addReplacementRow.classList.toggle("hidden", !e.target.checked);
     if (e.target.checked) newTermReplacement.focus();
     else newTermReplacement.value = "";
+  });
+
+  newTermReplacement.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addTerm();
   });
 
   document.getElementById("newTermPartial").addEventListener("change", (e) => {
@@ -782,6 +793,14 @@ document.addEventListener("DOMContentLoaded", () => {
     div.textContent = str;
     return div.innerHTML;
   }
+
+  // --- Auto-Detection collapse ---
+
+  document.getElementById("autoDetectHeader").addEventListener("click", () => {
+    const section = document.getElementById("autoDetectSection");
+    const collapsed = section.classList.toggle("section--collapsed");
+    chrome.storage.local.set({ autoDetectCollapsed: collapsed });
+  });
 
   // --- Start ---
   init();
